@@ -1,65 +1,45 @@
-class Graph:
-    def __init__(self, vertices):
-        self.vertices = vertices
-        self.graph = []
+import heapq
 
-    def add_edge(self, src, dest, weight):
-        self.graph.append((src, dest, weight))
+def prim(graph):
+    priority_queue = []
+    heapq.heapify(priority_queue)
 
-    def find(self, parent, i):
-        if parent[i] == i:
-            return i
-        return self.find(parent, parent[i])
+    start_office = list(graph.keys())[0]
+    visited = set([start_office])
 
-    def union(self, parent, rank, x, y):
-        root_x = self.find(parent, x)
-        root_y = self.find(parent, y)
+    mst = []
+    total_cost = 0
 
-        if rank[root_x] < rank[root_y]:
-            parent[root_x] = root_y
-        elif rank[root_x] > rank[root_y]:
-            parent[root_y] = root_x
-        else:
-            parent[root_y] = root_x
-            rank[root_x] += 1
+    for neighbor, cost in graph[start_office]:
+        heapq.heappush(priority_queue, (cost, start_office, neighbor))
 
-    def kruskal_mst(self):
-        result = []
-        i = 0
-        e = 0
-        parent = []
-        rank = []
+    while len(priority_queue) :
+        cost, office1, office2 = heapq.heappop(priority_queue)
 
-        self.graph = sorted(self.graph, key=lambda item: item[2])
+        # Check for a cycle
+        if office2 not in visited:
+            visited.add(office2)
+            mst.append((office1, office2, cost))
+            total_cost += cost
 
-        for node in range(self.vertices):
-            parent.append(node)
-            rank.append(0)
+            # Add the edges of the newly visited office to the priority queue
+            for neighbor, cost in graph[office2]:
+                heapq.heappush(priority_queue, (cost, office2, neighbor))
 
-        while e < self.vertices - 1:
-            src, dest, weight = self.graph[i]
-            i += 1
-            x = self.find(parent, src)
-            y = self.find(parent, dest)
-
-            if x != y:
-                e += 1
-                result.append((src, dest, weight))
-                self.union(parent, rank, x, y)
-
-        return result
-
+    return mst, total_cost
 
 # Example usage
-g = Graph(4)
-g.add_edge(0, 1, 4)
-g.add_edge(0, 3, 8)
-g.add_edge(1, 2, 6)
-g.add_edge(1, 3, 2)
-g.add_edge(2, 3, 3)
+graph = {
+    'Office1': [('Office2', 5), ('Office3', 10)],
+    'Office2': [('Office1', 5), ('Office3', 8), ('Office4', 6)],
+    'Office3': [('Office1', 10), ('Office2', 8), ('Office4', 3)],
+    'Office4': [('Office2', 6), ('Office3', 3)]
+}
 
-mst = g.kruskal_mst()
+mst, total_cost = prim(graph)
 
-# Print the minimum spanning tree
-for src, dest, weight in mst:
-    print(f"Office {src} connected to Office {dest} with a cost of {weight}")
+# Print the minimum spanning tree and total cost
+print("Minimum Spanning Tree:")
+for edge in mst:
+    print(edge)
+print("Total Cost:", total_cost)
